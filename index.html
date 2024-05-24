@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>素数カウントゲーム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
             display: flex;
@@ -11,35 +12,61 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             background-color: #f0f0f0;
+            color: #333;
         }
 
         .game-container {
             text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-weight: 700;
         }
 
         #number {
             font-size: 3rem;
             margin-bottom: 20px;
+            font-weight: 700;
         }
 
         #result {
-            font-size: 2rem;
+            font-size: 1.5rem;
             margin-top: 20px;
-            height: 2.5rem; /* 固定高さを設定 */
+            min-height: 2em; /* 固定の高さを設定 */
+            color: #d9534f;
         }
 
-        #prime-button, #not-prime-button, #continue-button {
+        #prime-button, #not-prime-button, #continue-button, #start-button {
             padding: 10px 20px;
             font-size: 1rem;
             cursor: pointer;
             margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: #fff;
+            transition: background-color 0.3s ease;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+
+        #prime-button:hover, #not-prime-button:hover, #continue-button:hover, #start-button:hover {
+            background-color: #45a049;
         }
 
         #timer {
             font-size: 1.5rem;
             margin-top: 20px;
+            color: #FF5722;
+            font-weight: 700;
         }
 
         #settings {
@@ -49,6 +76,24 @@
         #best-score {
             font-size: 1.5rem;
             margin-top: 20px;
+            color: #FFC107;
+            font-weight: 700;
+        }
+
+        input[type=number] {
+            padding: 5px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 60px;
+            text-align: center;
+            margin-right: 10px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -70,7 +115,7 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            let currentNumber;
+            let currentNumber = 2;
             let timeLeft;
             let timerInterval;
             let bestScore = 0;
@@ -143,13 +188,12 @@
             }
 
             function resetGame() {
-                currentNumber = 2; // 数値の初期化
+                currentNumber = 2;
                 timeLeft = parseInt(timeInput.value, 10);
                 if (isNaN(timeLeft) || timeLeft <= 0) {
                     alert('有効な制限時間を入力してください。');
                     return;
                 }
-                numberElement.textContent = currentNumber; // 初期の数値を表示
                 timeElement.textContent = timeLeft;
                 timerElement.style.display = 'block';
                 numberElement.style.display = 'block';
@@ -162,7 +206,6 @@
                 notPrimeButton.disabled = false;
                 continueButton.style.display = 'none';
 
-                clearInterval(timerInterval);
                 timerInterval = setInterval(() => {
                     timeLeft--;
                     timeElement.textContent = timeLeft;

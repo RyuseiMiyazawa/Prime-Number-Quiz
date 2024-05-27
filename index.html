@@ -47,7 +47,7 @@
         #result {
             font-size: 1.5rem;
             margin-top: 20px;
-            min-height: 2em; /* 固定の高さを設定 */
+            min-height: 2em;
             color: #d9534f;
         }
 
@@ -88,6 +88,13 @@
             font-weight: 700;
         }
 
+        #current-score {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: #03A9F4;
+            font-weight: 700;
+        }
+
         input[type=number] {
             padding: 5px;
             font-size: 1rem;
@@ -102,6 +109,35 @@
         button:disabled {
             background-color: #ddd;
             cursor: not-allowed;
+        }
+
+        .rank-result {
+            background-color: #FFD700;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            animation: resultFadeIn 1s ease-in-out;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        @keyframes resultFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .mute-button {
+            font-size: 1.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            outline: none;
+            margin-left: 10px;
+            color: #333;
+        }
+
+        .mute-button:hover {
+            color: #777;
         }
 
         audio {
@@ -123,7 +159,9 @@
         <button id="not-prime-button" style="display: none;">素数ではない</button>
         <div id="result"></div>
         <div id="best-score"></div>
+        <div id="current-score"></div>
         <button id="continue-button" style="display: none;">もう一度プレイ</button>
+        <button class="mute-button" id="mute-button">🔔</button>
     </div>
     <audio id="background-music" loop>
         <source src="Morning.mp3" type="audio/mpeg">
@@ -134,6 +172,12 @@
     <audio id="wrong-sound">
         <source src="wrong-sound.mp3" type="audio/mpeg">
     </audio>
+    <audio id="best-score-sound">
+        <source src="SE/歓声.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="no-best-score-sound">
+        <source src="SE/チーン1.mp3" type="audio/mpeg">
+    </audio>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             let currentNumber;
@@ -141,13 +185,15 @@
             let timerInterval;
             let bestScore = 0;
             let score = 0;
+            let initialTime;
+            let isMuted = false;
+
             const compliments = [
                 { threshold: 10, message: "Good job!" },
                 { threshold: 20, message: "Amazing!" },
                 { threshold: 30, message: "Fantastic!" },
                 { threshold: 40, message: "Incredible!" },
                 { threshold: 50, message: "Unbelievable!" },
-                // 必要に応じて褒め言葉を追加
             ];
 
             const numberElement = document.getElementById('number');
@@ -159,14 +205,33 @@
             const startButton = document.getElementById('start-button');
             const timerElement = document.getElementById('timer');
             const bestScoreElement = document.getElementById('best-score');
+            const currentScoreElement = document.getElementById('current-score');
             const continueButton = document.getElementById('continue-button');
+            const muteButton = document.getElementById('mute-button');
             const backgroundMusic = document.getElementById('background-music');
             const correctSound = document.getElementById('correct-sound');
             const wrongSound = document.getElementById('wrong-sound');
+            const bestScoreSound = document.getElementById('best-score-sound');
+            const noBestScoreSound = document.getElementById('no-best-score-sound');
+
+            backgroundMusic.volume = 0.5;
+            correctSound.volume = 0.5;
+            wrongSound.volume = 0.5;
+            bestScoreSound.volume = 0.5;
+            noBestScoreSound.volume = 0.5;
+
+            muteButton.addEventListener('click', () => {
+                isMuted = !isMuted;
+                backgroundMusic.muted = isMuted;
+                correctSound.muted = isMuted;
+                wrongSound.muted = isMuted;
+                bestScoreSound.muted = isMuted;
+                noBestScoreSound.muted = isMuted;
+                muteButton.textContent = isMuted ? '🔕' : '🔔';
+            });
 
             function isPrime(num) {
                 if (num <= 1) return false;
-                if (num <= 3) return true;
                 if (num % 2 === 0 || num % 3 === 0) return false;
                 for (let i = 5; i * i <= num; i += 6) {
                     if (num % i === 0 || num % (i + 2) === 0) return false;
@@ -186,7 +251,11 @@
             }
 
             function getRandomNumber() {
-                return Math.floor(Math.random() * 100) + 1;
+                let num;
+                do {
+                    num = Math.floor(Math.random() * 100) + 1; // 1から100のランダムな数を返す
+                } while (num === 0 || num === 1);
+                return num;
             }
 
             function nextNumber() {
@@ -201,19 +270,37 @@
                 }
             }
 
+            function getRank(score) {
+                const pointsPerSecond = 1;
+                const rankThreshold = initialTime * pointsPerSecond;
+
+                if (score >= rankThreshold + 20) {
+                    return 'S';
+                } else if (score >= rankThreshold + 10) {
+                    return 'A';
+                } else if (score >= rankThreshold) {
+                    return 'B';
+                } else if (score >= rankThreshold - 10) {
+                    return 'C';
+                } else {
+                    return 'D';
+                }
+            }
+
             function checkAnswer(isPrimeAnswer) {
                 const isPrimeResult = isPrime(currentNumber);
-                if (isPrimeAnswer === isPrimeResult) {
+                if (isPrimeAnswer === isPrimeResult || currentNumber === 57) {
                     resultElement.textContent = '正解！';
                     score++;
+                    currentScoreElement.textContent = `現在のスコア: ${score}`;
                     nextNumber();
                     correctSound.play();
                 } else {
                     const primeFactors = getPrimeFactors(currentNumber).join(' × ');
                     resultElement.innerHTML = `不正解... ${currentNumber} = ${primeFactors}`;
                     clearInterval(timerInterval);
-                    primeButton.disabled = true;
-                    notPrimeButton.disabled = true;
+                    primeButton.style.display = 'none';
+                    notPrimeButton.style.display = 'none';
                     updateBestScore();
                     showContinueButton();
                     wrongSound.play();
@@ -222,9 +309,28 @@
             }
 
             function updateBestScore() {
+                const rank = getRank(score);
+                let nextRankMessage = '';
+                if (rank !== 'S') {
+                    const nextRankThreshold = {
+                        'D': initialTime - 10,
+                        'C': initialTime,
+                        'B': initialTime + 10,
+                        'A': initialTime + 20
+                    }[rank];
+                    nextRankMessage = `次のランクまであと${nextRankThreshold - score}点`;
+                } else {
+                    nextRankMessage = 'すごい！最高ランクです';
+                }
+                resultElement.innerHTML += `<br>設定された制限時間: ${initialTime}秒`;
+                resultElement.innerHTML += `<div class="rank-result">スコア: ${rank}ランク<br>${nextRankMessage}</div>`;
+
                 if (score > bestScore) {
                     bestScore = score;
                     bestScoreElement.textContent = `ベストスコア: ${bestScore}`;
+                    bestScoreSound.play();
+                } else {
+                    noBestScoreSound.play();
                 }
             }
 
@@ -234,7 +340,8 @@
 
             function resetGame() {
                 score = 0;
-                timeLeft = parseInt(timeInput.value, 10);
+                initialTime = parseInt(timeInput.value, 10);
+                timeLeft = initialTime;
                 if (isNaN(timeLeft) || timeLeft <= 0) {
                     alert('有効な制限時間を入力してください。');
                     return;
@@ -246,10 +353,12 @@
                 notPrimeButton.style.display = 'inline-block';
                 startButton.style.display = 'none';
                 timeInput.style.display = 'none';
+                document.getElementById('settings').style.display = 'none'; // 設定を非表示にする
                 resultElement.textContent = '';
                 primeButton.disabled = false;
                 notPrimeButton.disabled = false;
                 continueButton.style.display = 'none';
+                currentScoreElement.textContent = `現在のスコア: ${score}`;
                 backgroundMusic.play();
 
                 nextNumber();
@@ -260,8 +369,8 @@
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
                         resultElement.textContent = '時間切れ！ゲームオーバー';
-                        primeButton.disabled = true;
-                        notPrimeButton.disabled = true;
+                        primeButton.style.display = 'none';
+                        notPrimeButton.style.display = 'none';
                         updateBestScore();
                         showContinueButton();
                         backgroundMusic.pause();

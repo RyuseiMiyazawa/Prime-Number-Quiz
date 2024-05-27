@@ -15,6 +15,7 @@
             font-family: 'Roboto', sans-serif;
             background-color: #f0f0f0;
             color: #333;
+            overflow: hidden;
         }
 
         .game-container {
@@ -23,6 +24,12 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         h1 {
@@ -53,13 +60,14 @@
             border-radius: 5px;
             background-color: #4CAF50;
             color: #fff;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease;
             font-family: 'Roboto', sans-serif;
             font-weight: 700;
         }
 
         #prime-button:hover, #not-prime-button:hover, #continue-button:hover, #start-button:hover {
             background-color: #45a049;
+            transform: scale(1.1);
         }
 
         #timer {
@@ -95,6 +103,10 @@
             background-color: #ddd;
             cursor: not-allowed;
         }
+
+        audio {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -106,19 +118,29 @@
             <button id="start-button">スタート</button>
         </div>
         <div id="timer" style="display: none;">残り時間: <span id="time"></span>秒</div>
-        <div id="number" style="display: none;">2</div>
+        <div id="number" style="display: none;"></div>
         <button id="prime-button" style="display: none;">素数</button>
         <button id="not-prime-button" style="display: none;">素数ではない</button>
         <div id="result"></div>
         <div id="best-score"></div>
         <button id="continue-button" style="display: none;">もう一度プレイ</button>
     </div>
+    <audio id="background-music" loop>
+        <source src="Morning.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="correct-sound">
+        <source src="correct-sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="wrong-sound">
+        <source src="wrong-sound.mp3" type="audio/mpeg">
+    </audio>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            let currentNumber = 2;
+            let currentNumber;
             let timeLeft;
             let timerInterval;
             let bestScore = 0;
+            let score = 0;
             const compliments = [
                 { threshold: 10, message: "Good job!" },
                 { threshold: 20, message: "Amazing!" },
@@ -138,6 +160,9 @@
             const timerElement = document.getElementById('timer');
             const bestScoreElement = document.getElementById('best-score');
             const continueButton = document.getElementById('continue-button');
+            const backgroundMusic = document.getElementById('background-music');
+            const correctSound = document.getElementById('correct-sound');
+            const wrongSound = document.getElementById('wrong-sound');
 
             function isPrime(num) {
                 if (num <= 1) return false;
@@ -149,13 +174,28 @@
                 return true;
             }
 
+            function getPrimeFactors(num) {
+                const factors = [];
+                for (let i = 2; i <= num; i++) {
+                    while (num % i === 0) {
+                        factors.push(i);
+                        num /= i;
+                    }
+                }
+                return factors;
+            }
+
+            function getRandomNumber() {
+                return Math.floor(Math.random() * 100) + 1;
+            }
+
             function nextNumber() {
-                currentNumber++;
+                currentNumber = getRandomNumber();
                 numberElement.textContent = currentNumber;
                 resultElement.textContent = '';
 
                 for (const compliment of compliments) {
-                    if (currentNumber === compliment.threshold) {
+                    if (score === compliment.threshold) {
                         resultElement.textContent = compliment.message;
                     }
                 }
@@ -165,20 +205,25 @@
                 const isPrimeResult = isPrime(currentNumber);
                 if (isPrimeAnswer === isPrimeResult) {
                     resultElement.textContent = '正解！';
+                    score++;
                     nextNumber();
+                    correctSound.play();
                 } else {
-                    resultElement.textContent = '不正解...';
+                    const primeFactors = getPrimeFactors(currentNumber).join(' × ');
+                    resultElement.innerHTML = `不正解... ${currentNumber} = ${primeFactors}`;
                     clearInterval(timerInterval);
                     primeButton.disabled = true;
                     notPrimeButton.disabled = true;
                     updateBestScore();
                     showContinueButton();
+                    wrongSound.play();
+                    backgroundMusic.pause();
                 }
             }
 
             function updateBestScore() {
-                if (currentNumber > bestScore) {
-                    bestScore = currentNumber;
+                if (score > bestScore) {
+                    bestScore = score;
                     bestScoreElement.textContent = `ベストスコア: ${bestScore}`;
                 }
             }
@@ -188,7 +233,7 @@
             }
 
             function resetGame() {
-                currentNumber = 2;
+                score = 0;
                 timeLeft = parseInt(timeInput.value, 10);
                 if (isNaN(timeLeft) || timeLeft <= 0) {
                     alert('有効な制限時間を入力してください。');
@@ -205,6 +250,9 @@
                 primeButton.disabled = false;
                 notPrimeButton.disabled = false;
                 continueButton.style.display = 'none';
+                backgroundMusic.play();
+
+                nextNumber();
 
                 timerInterval = setInterval(() => {
                     timeLeft--;
@@ -216,6 +264,7 @@
                         notPrimeButton.disabled = true;
                         updateBestScore();
                         showContinueButton();
+                        backgroundMusic.pause();
                     }
                 }, 1000);
             }

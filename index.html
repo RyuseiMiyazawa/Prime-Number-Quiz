@@ -25,6 +25,8 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             animation: fadeIn 1s ease-in-out;
+            width: 90%; /* スマホ対応のために幅を調整 */
+            max-width: 500px; /* 最大幅を設定 */
         }
 
         @keyframes fadeIn {
@@ -117,7 +119,7 @@
             border-radius: 10px;
             margin-top: 20px;
             animation: resultFadeIn 1s ease-in-out;
-            font-size: 2rem;
+            font-size: 1.5rem; /* フォントサイズを調整 */
             font-weight: bold;
         }
 
@@ -308,87 +310,87 @@
                 }
             }
 
-            function updateBestScore() {
-                const rank = getRank(score);
-                let nextRankMessage = '';
-                if (rank !== 'S') {
-                    const nextRankThreshold = {
-                        'D': initialTime - 10,
-                        'C': initialTime,
-                        'B': initialTime + 10,
-                        'A': initialTime + 20
-                    }[rank];
-                    nextRankMessage = `次のランクまであと${nextRankThreshold - score}点`;
-                } else {
-                    nextRankMessage = 'すごい！最高ランクです';
-                }
-                resultElement.innerHTML += `<br>設定された制限時間: ${initialTime}秒`;
-                resultElement.innerHTML += `<div class="rank-result">スコア: ${rank}ランク<br>${nextRankMessage}</div>`;
+                function updateBestScore() {
+    const rank = getRank(score);
+    let nextRankMessage = '';
+    if (rank !== 'S') {
+        const nextRankThreshold = {
+            'D': initialTime - 10,
+            'C': initialTime,
+            'B': initialTime + 10,
+            'A': initialTime + 20
+        }[rank];
+        nextRankMessage = `次のランクまであと${nextRankThreshold - score}点`;
+    } else {
+        nextRankMessage = 'すごい！最高ランクです';
+    }
+    resultElement.innerHTML += `<br>設定された制限時間: ${initialTime}秒`;
+    resultElement.innerHTML += `<div class="rank-result">スコア: ${rank}ランク<br>${nextRankMessage}</div>`;
 
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestScoreElement.textContent = `ベストスコア: ${bestScore}`;
-                    bestScoreSound.play();
-                } else {
-                    noBestScoreSound.play();
-                }
-            }
+    if (score > bestScore) {
+        bestScore = score;
+        bestScoreElement.textContent = `ベストスコア: ${bestScore}`;
+        bestScoreSound.play();
+    } else {
+        noBestScoreSound.play();
+    }
+}
 
-            function showContinueButton() {
-                continueButton.style.display = 'block';
-            }
+function showContinueButton() {
+    continueButton.style.display = 'block';
+}
 
-            function resetGame() {
-                score = 0;
-                initialTime = parseInt(timeInput.value, 10);
-                timeLeft = initialTime;
-                if (isNaN(timeLeft) || timeLeft <= 0) {
-                    alert('有効な制限時間を入力してください。');
-                    return;
-                }
-                timeElement.textContent = timeLeft;
-                timerElement.style.display = 'block';
-                numberElement.style.display = 'block';
-                primeButton.style.display = 'inline-block';
-                notPrimeButton.style.display = 'inline-block';
-                startButton.style.display = 'none';
-                timeInput.style.display = 'none';
-                document.getElementById('settings').style.display = 'none'; // 設定を非表示にする
-                resultElement.textContent = '';
-                primeButton.disabled = false;
-                notPrimeButton.disabled = false;
-                continueButton.style.display = 'none';
-                currentScoreElement.textContent = `現在のスコア: ${score}`;
-                backgroundMusic.play();
+function resetGame() {
+    score = 0;
+    initialTime = parseInt(timeInput.value, 10);
+    timeLeft = initialTime;
+    if (isNaN(timeLeft) || timeLeft <= 0) {
+        alert('有効な制限時間を入力してください。');
+        return;
+    }
+    timeElement.textContent = timeLeft;
+    timerElement.style.display = 'block';
+    numberElement.style.display = 'block';
+    primeButton.style.display = 'inline-block';
+    notPrimeButton.style.display = 'inline-block';
+    startButton.style.display = 'none';
+    timeInput.style.display = 'none';
+    document.getElementById('settings').style.display = 'none'; // 設定を非表示にする
+    resultElement.textContent = '';
+    primeButton.disabled = false;
+    notPrimeButton.disabled = false;
+    continueButton.style.display = 'none';
+    currentScoreElement.textContent = `現在のスコア: ${score}`;
+    backgroundMusic.play();
 
-                nextNumber();
+    nextNumber();
 
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    timeElement.textContent = timeLeft;
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        resultElement.textContent = '時間切れ！ゲームオーバー';
-                        primeButton.style.display = 'none';
-                        notPrimeButton.style.display = 'none';
-                        updateBestScore();
-                        showContinueButton();
-                        backgroundMusic.pause();
-                    }
-                }, 1000);
-            }
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timeElement.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            resultElement.textContent = '時間切れ！ゲームオーバー';
+            primeButton.style.display = 'none';
+            notPrimeButton.style.display = 'none';
+            updateBestScore();
+            showContinueButton();
+            backgroundMusic.pause();
+        }
+    }, 1000);
+}
 
-            primeButton.addEventListener('click', function() {
-                checkAnswer(true);
-            });
+primeButton.addEventListener('click', function() {
+    checkAnswer(true);
+});
 
-            notPrimeButton.addEventListener('click', function() {
-                checkAnswer(false);
-            });
+notPrimeButton.addEventListener('click', function() {
+    checkAnswer(false);
+});
 
-            startButton.addEventListener('click', resetGame);
-            continueButton.addEventListener('click', resetGame);
-        });
-    </script>
+startButton.addEventListener('click', resetGame);
+continueButton.addEventListener('click', resetGame);
+});
+</script>
 </body>
 </html>
